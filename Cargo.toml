@@ -1,0 +1,28 @@
+[package]
+name = "pie_chart"
+version = "0.0.0"
+edition = "2021"
+authors = ["John Lyon-Smith <john@lyon-smith.org>"]
+description = "A pie chart generator"
+repository = "https://github.com/jlyonsmith/pie_chart"
+readme = "README.md"
+keywords = []
+categories = []
+license = "Unlicense"
+
+[dependencies]
+clap = { version = "4.0.7", features = ["derive", "env"] }
+easy-error = "1.0.0"
+lazy_static = "1.4.0"
+yansi = "0.5.1"
+
+[dev-dependencies]
+criterion = "^0.3"
+
+[[bench]]
+name = "benchmarks"
+harness = false
+
+[[bin]]
+name = "pie-chart"
+path = "src/bin/pie_chart.rs"
