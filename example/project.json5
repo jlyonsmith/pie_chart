@@ -1,0 +1,25 @@
+{
+  title: "Grades",
+  items: [
+    {
+      key: "A",
+      value: 2,
+    },
+    {
+      key: "B",
+      value: 30,
+    },
+    {
+      key: "C",
+      value: 11,
+    },
+    {
+      key: "D",
+      value: 2,
+    },
+    {
+      key: "F",
+      value: 2,
+    },
+  ],
+}

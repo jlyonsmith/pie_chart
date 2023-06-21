@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="520" viewBox="0 0 480 520" style="background-color: white;">
+	<style>
+ .labels{fill:rgb(0,0,0);font-size:10;font-family:Arial}
+ .title{font-family:Arial;font-size:12;text-anchor:middle;}
+ .legend{font-family:Arial;font-size:12pt;text-anchor:end;dominant-baseline:middle;}
+ .wedge-0{fill:#80407b;stroke-width:0}
+ .wedge-1{fill:#408072;stroke-width:0}
+ .wedge-2{fill:#805f40;stroke-width:0}
+ .wedge-3{fill:#4c4080;stroke-width:0}
+ .wedge-4{fill:#458040;stroke-width:0}
+	</style>
+	<g>
+		<path class="wedge-0" d=" M 240 240 L 240 40 A 200 200 0 0 1 292.8390803742572 47.10616498912469 Z"/>
+		<path class="wedge-1" d=" M 240 240 L 292.8390803742572 47.10616498912469 A 200 200 0 1 1 58.581817253131874 324.186952485667 Z"/>
+		<path class="wedge-2" d=" M 240 240 L 58.581817253131874 324.186952485667 A 200 200 0 0 1 138.07667148161644 67.91968414797216 Z"/>
+		<path class="wedge-3" d=" M 240 240 L 138.07667148161644 67.91968414797216 A 200 200 0 0 1 187.16091962574274 47.10616498912472 Z"/>
+		<path class="wedge-4" d=" M 240 240 L 187.16091962574274 47.10616498912472 A 200 200 0 0 1 239.99999999999997 40 Z"/>
+	</g>
+	<text class="title" x="240" y="20">
+ Grades
+	</text>
+	<g>
+		<rect class="wedge-0" x="90" y="450" rx="3" ry="3" width="20" height="20"/>
+		<text class="legend" x="80" y="462">
+ A (4%)
+		</text>
+		<rect class="wedge-1" x="165" y="450" rx="3" ry="3" width="20" height="20"/>
+		<text class="legend" x="155" y="462">
+ B (64%)
+		</text>
+		<rect class="wedge-2" x="240" y="450" rx="3" ry="3" width="20" height="20"/>
+		<text class="legend" x="230" y="462">
+ C (23%)
+		</text>
+		<rect class="wedge-3" x="315" y="450" rx="3" ry="3" width="20" height="20"/>
+		<text class="legend" x="305" y="462">
+ D (4%)
+		</text>
+		<rect class="wedge-4" x="390" y="450" rx="3" ry="3" width="20" height="20"/>
+		<text class="legend" x="380" y="462">
+ F (4%)
+		</text>
+	</g>
+</svg>
