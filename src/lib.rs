@@ -3,7 +3,6 @@ mod log_macros;
 use clap::Parser;
 use core::fmt::Arguments;
 use easy_error::{self, ResultExt};
-use hypermelon::{attr::PathCommand::*, build, prelude::*};
 use rand::prelude::*;
 use serde::Deserialize;
 use std::{
@@ -12,6 +11,10 @@ use std::{
     io::{self, Read, Write},
     path::PathBuf,
     vec,
+};
+use svg::{
+    node::{element::path::*, *},
+    Document,
 };
 
 static GOLDEN_RATIO_CONJUGATE: f32 = 0.618033988749895;
@@ -100,7 +103,6 @@ impl Gutter {
 #[derive(Debug)]
 struct WedgeData {
     title: String,
-    value: f64,
     percentage: f64,
 }
 
@@ -135,9 +137,9 @@ impl<'a> PieChartTool<'a> {
 
         let chart_data = Self::read_chart_file(cli.get_input()?)?;
         let render_data = self.process_chart_data(&chart_data)?;
-        let output = self.render_chart(&render_data)?;
+        let document = self.render_chart(&render_data)?;
 
-        Self::write_svg_file(cli.get_output()?, &output)?;
+        Self::write_svg_file(cli.get_output()?, &document)?;
 
         Ok(())
     }
@@ -152,8 +154,8 @@ impl<'a> PieChartTool<'a> {
         Ok(chart_data)
     }
 
-    fn write_svg_file(mut writer: Box<dyn Write>, output: &str) -> Result<(), Box<dyn Error>> {
-        write!(writer, "{}", output)?;
+    fn write_svg_file(writer: Box<dyn Write>, document: &Document) -> Result<(), Box<dyn Error>> {
+        svg::write(writer, document)?;
 
         Ok(())
     }
@@ -192,8 +194,7 @@ impl<'a> PieChartTool<'a> {
         let mut styles = vec![
             ".labels{fill:rgb(0,0,0);font-size:10;font-family:Arial}".to_string(),
             ".title{font-family:Arial;font-size:12;text-anchor:middle;}".to_string(),
-            ".legend{font-family:Arial;font-size:12pt;text-anchor:end;dominant-baseline:middle;}"
-                .to_string(),
+            ".legend{font-family:Arial;font-size:12pt;text-anchor:left;}".to_string(),
         ];
         let total: f64 = cd.items.iter().fold(0.0, |acc, item| acc + item.value);
 
@@ -208,7 +209,6 @@ impl<'a> PieChartTool<'a> {
 
             wedges.push(WedgeData {
                 title: item.key.to_string(),
-                value: item.value,
                 percentage: item.value / total,
             });
 
@@ -242,108 +242,93 @@ impl<'a> PieChartTool<'a> {
         })
     }
 
-    fn render_chart(self: &Self, rd: &RenderData) -> Result<String, Box<dyn Error>> {
+    fn render_chart(self: &Self, rd: &RenderData) -> Result<Document, Box<dyn Error>> {
         let width = rd.gutter.left + rd.pie_diameter + rd.gutter.right;
         let height = rd.gutter.top
             + rd.pie_diameter
             + rd.legend_gutter.height()
             + rd.legend_height
             + rd.gutter.bottom;
-        let style =
-            build::elem("style").append(build::from_iter(rd.styles.iter().map(|s| s.as_str())));
         let radius = rd.pie_diameter / 2.0;
         let x_center = rd.gutter.left + radius;
         let y_center = rd.gutter.bottom + radius;
+        let mut document = Document::new()
+            .set("xmlns", "http://www.w3.org/2000/svg")
+            .set("width", width)
+            .set("height", height)
+            .set("viewBox", format!("0 0 {} {}", width, height))
+            .set("style", "background-color: white;");
+        let style = element::Style::new(rd.styles.join("\n"));
+        let mut a = -90f64.to_radians();
+        let mut pie = element::Group::new();
 
-        let svg = build::elem("svg").with(attrs!(
-            ("xmlns", "http://www.w3.org/2000/svg"),
-            ("width", width),
-            ("height", height),
-            ("viewBox", format_move!("0 0 {} {}", width, height)),
-            ("style", "background-color: white;")
-        ));
+        for (index, wedge) in rd.wedges.iter().enumerate() {
+            let b = a + (wedge.percentage * 360.0).to_radians();
 
-        let pie = build::elem("g").append(build::from_closure(move |w| {
-            let mut a = -90f64.to_radians();
-
-            let paths = rd.wedges.iter().enumerate().map(|tuple| {
-                let (index, wedge) = tuple;
-                let b = a + (wedge.percentage * 360.0).to_radians();
-                let path = build::single("path").with(attrs!(
-                    ("class", format_move!("wedge-{}", index)),
-                    build::path([
-                        M(x_center, y_center),
-                        L(x_center + radius * a.cos(), y_center + radius * a.sin()),
-                        A(
-                            radius,
-                            radius,
-                            0.0,
-                            if wedge.percentage > 0.5 { 1.0 } else { 0.0 },
-                            1.0,
-                            x_center + radius * b.cos(),
-                            y_center + radius * b.sin()
-                        ),
-                        Z(),
-                    ])
-                ));
-
-                a = b;
-                path
-            });
-
-            w.render(build::from_iter(paths))
-        }));
-
-        let title = build::elem("text")
-            .with(attrs!(
-                ("class", "title"),
-                ("x", width / 2.0),
-                ("y", rd.gutter.top / 2.0)
-            ))
-            .append(build::raw(format_move!("{}", &rd.title)));
-
-        let legend = build::elem("g").append(build::from_iter((0..rd.wedges.len()).map(|i| {
-            let wedge = &rd.wedges[i];
-
-            build::from_closure(move |w| {
-                let y = rd.gutter.top + rd.pie_diameter;
-                let text_width = 75.0;
-                let text = build::elem("text")
-                    .with(attrs!(
-                        ("class", "legend"),
-                        (
-                            "x",
-                            rd.legend_gutter.left + ((i + 1) as f64) * text_width - 5.0
-                        ),
-                        ("y", y + rd.legend_gutter.top + rd.legend_height * 0.6)
-                    ))
-                    .append(build::raw(format_move!(
-                        "{} ({:.0}%)",
-                        &wedge.title,
-                        wedge.percentage * 100f64
-                    )));
-                let block = build::single("rect").with(attrs!(
-                    ("class", format_move!("wedge-{}", i)),
-                    (
-                        "x",
-                        rd.legend_gutter.left + ((i + 1) as f64) * text_width + 5.0
+            pie.append(
+                element::Path::new()
+                    .set("class", format!("wedge-{}", index))
+                    .set(
+                        "d",
+                        Data::new()
+                            .move_to((x_center, y_center))
+                            .line_to((x_center + radius * a.cos(), y_center + radius * a.sin()))
+                            .elliptical_arc_to((
+                                radius,
+                                radius,
+                                0.0,
+                                if wedge.percentage > 0.5 { 1.0 } else { 0.0 },
+                                1.0,
+                                x_center + radius * b.cos(),
+                                y_center + radius * b.sin(),
+                            ))
+                            .close(),
                     ),
-                    ("y", y + rd.legend_gutter.top),
-                    ("rx", rd.rect_corner_radius),
-                    ("ry", rd.rect_corner_radius),
-                    ("width", rd.legend_height),
-                    ("height", rd.legend_height)
-                ));
-                w.render(block.append(text))
-            })
-        })));
+            );
 
-        let mut output = String::new();
-        let all = svg.append(style).append(pie).append(title).append(legend);
+            a = b;
+        }
 
-        hypermelon::render(all, &mut output)?;
+        let title = element::Text::new(format!("{}", &rd.title))
+            .set("class", "title")
+            .set("x", width / 2.0)
+            .set("y", rd.gutter.top / 2.0);
 
-        Ok(output)
+        let mut legend = element::Group::new();
+        let text_width = (width - rd.legend_gutter.width()) / (rd.wedges.len() as f64);
+
+        for i in 0..rd.wedges.len() {
+            let wedge = &rd.wedges[i];
+            let y = rd.gutter.top + rd.pie_diameter;
+            let block = element::Rectangle::new()
+                .set("class", format!("wedge-{}", i))
+                .set("x", rd.legend_gutter.left + (i as f64) * text_width)
+                .set("y", y + rd.legend_gutter.top)
+                .set("rx", rd.rect_corner_radius)
+                .set("ry", rd.rect_corner_radius)
+                .set("width", rd.legend_height)
+                .set("height", rd.legend_height);
+
+            legend.append(block);
+
+            let text = element::Text::new(format!(
+                "{} ({:.0}%)",
+                &wedge.title,
+                wedge.percentage * 100f64
+            ))
+            .set("class", "legend")
+            .set("x", rd.legend_gutter.left + (i as f64) * text_width)
+            .set("y", y + rd.legend_gutter.top + rd.legend_height * 2.0);
+
+            legend.append(text);
+        }
+
+        document.append(style);
+        document.append(pie);
+        document.append(title);
+        document.append(legend);
+
+        Ok(document)
     }
 }
 
