@@ -1,6 +1,6 @@
 [package]
 name = "pie_chart"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["John Lyon-Smith <john@lyon-smith.org>"]
 description = "A pie chart generator"
