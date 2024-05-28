@@ -15,10 +15,10 @@ impl PieChartLog for PieChartLogger {
         println!("{}", args);
     }
     fn warning(self: &Self, args: Arguments) {
-        eprintln!("{}", format!("warning: {}", Paint::yellow(args)));
+        eprintln!("{}", format!("warning: {}", Paint::yellow(&args)));
     }
     fn error(self: &Self, args: Arguments) {
-        eprintln!("{}", format!("error: {}", Paint::red(args)));
+        eprintln!("{}", format!("error: {}", Paint::red(&args)));
     }
 }
 

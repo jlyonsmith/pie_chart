@@ -17,7 +17,7 @@ use svg::{
     Document,
 };
 
-static GOLDEN_RATIO_CONJUGATE: f32 = 0.618033988749895;
+const GOLDEN_RATIO_CONJUGATE: f32 = 0.618033988749895;
 
 pub trait PieChartLog {
     fn output(self: &Self, args: Arguments);
@@ -114,7 +114,7 @@ struct RenderData {
     styles: Vec<String>,
     legend_gutter: Gutter,
     legend_height: f64,
-    rect_corner_radius: f64,
+    legend_rect_corner_radius: f64,
     wedges: Vec<WedgeData>,
 }
 
@@ -200,7 +200,7 @@ impl<'a> PieChartTool<'a> {
 
         for tuple in cd.items.iter().enumerate() {
             let (index, item) = tuple;
-            let rgb = PieChartTool::hsv_to_rgb(h, 0.5, 0.5);
+            let rgb = Self::hsv_to_rgb(h, 0.5, 0.5);
 
             styles.push(format!(
                 ".wedge-{}{{fill:#{1:06x};stroke-width:0}}",
@@ -236,7 +236,7 @@ impl<'a> PieChartTool<'a> {
             pie_diameter,
             legend_gutter,
             legend_height,
-            rect_corner_radius: 3.0,
+            legend_rect_corner_radius: 3.0,
             styles,
             wedges,
         })
@@ -304,8 +304,8 @@ impl<'a> PieChartTool<'a> {
                 .set("class", format!("wedge-{}", i))
                 .set("x", rd.legend_gutter.left + (i as f64) * text_width)
                 .set("y", y + rd.legend_gutter.top)
-                .set("rx", rd.rect_corner_radius)
-                .set("ry", rd.rect_corner_radius)
+                .set("rx", rd.legend_rect_corner_radius)
+                .set("ry", rd.legend_rect_corner_radius)
                 .set("width", rd.legend_height)
                 .set("height", rd.legend_height);
 
